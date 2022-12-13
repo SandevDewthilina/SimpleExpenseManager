@@ -31,7 +31,7 @@ public class PersistentTransactionDAO implements TransactionDAO {
     @Override
     public void logTransaction(Date date, String accountNo, ExpenseType expenseType, double amount) {
         try {
-            SimpleDateFormat formatter = new SimpleDateFormat("E, dd MMM yyyy HH:mm:ss z");
+            SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy");
             Object[] args = {null, accountNo, expenseType.toString(), amount, formatter.format(date)};
             db.execSQL("insert into Transactions values(?, ?, ?, ?, ?)", args);
         } catch (Exception e) {
@@ -47,7 +47,7 @@ public class PersistentTransactionDAO implements TransactionDAO {
 
             String dateString = mCursor.getString(mCursor.getColumnIndex("date"));
             try {
-                Date datetime = new SimpleDateFormat("E, dd MMM yyyy HH:mm:ss z").parse(dateString);
+                Date datetime = new SimpleDateFormat("dd-MM-yyyy").parse(dateString);
 
                 Transaction transaction = new Transaction(
                         datetime,
@@ -66,12 +66,13 @@ public class PersistentTransactionDAO implements TransactionDAO {
     @Override
     public List<Transaction> getPaginatedTransactionLogs(int limit) {
         List<Transaction> transactions = new ArrayList<>();
-        Cursor mCursor = db.rawQuery("select * from Transactions", null);
+        String[] args = {limit+""};
+        Cursor mCursor = db.rawQuery("select * from Transactions where Id in (select Id from Transactions order by Id desc limit ?)", args);
         for (mCursor.moveToFirst(); !mCursor.isAfterLast(); mCursor.moveToNext()) {
 
             String dateString = mCursor.getString(mCursor.getColumnIndex("date"));
             try {
-                Date datetime = new SimpleDateFormat("E, dd MMM yyyy HH:mm:ss z").parse(dateString);
+                Date datetime = new SimpleDateFormat("dd-MM-yyyy").parse(dateString);
 
                 Transaction transaction = new Transaction(
                         datetime,

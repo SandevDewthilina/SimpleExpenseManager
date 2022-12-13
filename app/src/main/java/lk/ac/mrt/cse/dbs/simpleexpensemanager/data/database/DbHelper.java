@@ -15,11 +15,11 @@ public class DbHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        db.execSQL("CREATE TABLE Account(accountNo TEXT PRIMARY KEY, bankName TEXT NOT NULL, accountHolderName TEXT NOT NULL, balance REAL DEFAULT 0);");
-        db.execSQL("CREATE TABLE Transactions(Id INTEGER PRIMARY KEY AUTOINCREMENT, accountNo TEXT NOT NULL, expenseType TEXT NOT NULL, amount REAL DEFAULT 0, date DATE NOT " +
-                "NULL,FOREIGN KEY " +
-                "(accountNo)" +
-                " REFERENCES Account(accountNo));");
+        db.execSQL("CREATE TABLE Account(accountNo TEXT PRIMARY KEY, bankName TEXT NOT NULL, accountHolderName TEXT NOT NULL, balance REAL DEFAULT 0 check(balance >= 0));");
+        db.execSQL(
+                "CREATE TABLE Transactions(Id INTEGER PRIMARY KEY AUTOINCREMENT, accountNo TEXT NOT NULL, expenseType TEXT NOT NULL, " +
+                "amount REAL DEFAULT 0 check (amount >= 0), " +
+                "date DATE NOT NULL,FOREIGN KEY (accountNo) REFERENCES Account(accountNo));");
     }
 
     @Override
@@ -28,7 +28,21 @@ public class DbHelper extends SQLiteOpenHelper {
         while (upgradeTo < newVersion) {
             switch (upgradeTo) {
                 case 1:
-                    // no incremental change yet
+                    /*
+                     * add on delete cascade with transactions
+                     * balance and amount >= 0
+                     * */
+                    db.execSQL("DROP TABLE IF EXISTS Transactions");
+                    db.execSQL("DROP TABLE IF EXISTS Account");
+                    db.execSQL(
+                            "CREATE TABLE Account(accountNo TEXT PRIMARY KEY, bankName TEXT NOT NULL, accountHolderName TEXT NOT NULL, " +
+                                    "balance REAL DEFAULT 0 check(balance >= 0));"
+                    );
+                    db.execSQL(
+                            "CREATE TABLE Transactions(Id INTEGER PRIMARY KEY AUTOINCREMENT, accountNo TEXT NOT NULL, expenseType TEXT NOT NULL, " +
+                            "amount REAL DEFAULT 0 check (amount >= 0), " +
+                            "date DATE NOT NULL,FOREIGN KEY (accountNo) REFERENCES Account(accountNo));"
+                    );
                     break;
             }
             upgradeTo++;
